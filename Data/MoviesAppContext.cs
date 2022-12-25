@@ -23,6 +23,6 @@ namespace MoviesApp.Data
         public DbSet<MoviesApp.Models.Producer> Producer { get; set; }
 
         public DbSet<MoviesApp.Models.Actor_Movie> Actor_Movie { get; set; }
-        public object Producers { get; internal set; }
+      
     }
 }
