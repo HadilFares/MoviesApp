@@ -13,6 +13,20 @@ namespace MoviesApp.Data
             : base(options)
         {
         }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Actor_Movie>().HasKey(am => new
+            {
+                am.ActorId,
+                am.MovieId
+            });
+
+            modelBuilder.Entity<Actor_Movie>().HasOne(m => m.Movie).WithMany(am => am.Actor_Movie).HasForeignKey(m => m.MovieId);
+            modelBuilder.Entity<Actor_Movie>().HasOne(m => m.Actor).WithMany(am => am.Actor_Movie).HasForeignKey(m => m.ActorId);
+
+
+            base.OnModelCreating(modelBuilder);
+        }
 
         public DbSet<MoviesApp.Models.Actor> Actor { get; set; } = default!;
 

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using MoviesApp.Data;
+using MoviesApp.Data.ViewModels;
 using MoviesApp.Models;
 
 namespace MoviesApp.Controllers
@@ -37,6 +38,7 @@ namespace MoviesApp.Controllers
             var movie = await _context.Movie
                 .Include(m => m.Cinema)
                 .Include(m => m.Producer)
+                .Include(am=>am.Actor_Movie).ThenInclude(a=>a.Actor)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (movie == null)
             {
@@ -46,11 +48,25 @@ namespace MoviesApp.Controllers
             return View(movie);
         }
 
-        // GET: Movies/Create
-        public IActionResult Create()
+        public async Task<NewMovieDropdownsVM> GetNewMovieDropdownsValues()
         {
-            ViewData["CinemaId"] = new SelectList(_context.Set<Cinema>(), "Id", "Description");
-            ViewData["ProducerId"] = new SelectList(_context.Set<Producer>(), "Id", "Bio");
+            var response = new NewMovieDropdownsVM()
+            {
+                Actors = await _context.Actor.OrderBy(n => n.FullName).ToListAsync(),
+                Cinemas = await _context.Cinema.OrderBy(n => n.Name).ToListAsync(),
+                Producers = await _context.Producer.OrderBy(n => n.FullName).ToListAsync()
+            };
+
+            return response;
+        }
+        // GET: Movies/Create
+        public async Task<IActionResult> CreateAsync()
+        {
+            var movieDropdownsData = await GetNewMovieDropdownsValues();
+
+            ViewBag.Cinemas = new SelectList(movieDropdownsData.Cinemas, "Id", "Name");
+            ViewBag.Producers = new SelectList(movieDropdownsData.Producers, "Id", "FullName");
+            ViewBag.Actors = new SelectList(movieDropdownsData.Actors, "Id", "FullName");
             return View();
         }
 
@@ -59,19 +75,47 @@ namespace MoviesApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Description,Price,ImageURL,StartDate,EndDate,MovieCategory,CinemaId,ProducerId")] Movie movie)
+        public async Task<IActionResult> Create(NewMovieVM movie) 
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                _context.Add(movie);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["CinemaId"] = new SelectList(_context.Set<Cinema>(), "Id", "Description", movie.CinemaId);
-            ViewData["ProducerId"] = new SelectList(_context.Set<Producer>(), "Id", "Bio", movie.ProducerId);
-            return View(movie);
-        }
+                var movieDropdownsData = await GetNewMovieDropdownsValues();
 
+                ViewBag.Cinemas = new SelectList(movieDropdownsData.Cinemas, "Id", "Name");
+                ViewBag.Producers = new SelectList(movieDropdownsData.Producers, "Id", "FullName");
+                ViewBag.Actors = new SelectList(movieDropdownsData.Actors, "Id", "FullName");
+
+                return View(movie);
+            }
+            var newMovie = new Movie()
+            {
+                Name = movie.Name,
+                Description = movie.Description,
+                Price = movie.Price,
+                ImageURL = movie.ImageURL,
+                CinemaId = movie.CinemaId,
+                StartDate = movie.StartDate,
+                EndDate = movie.EndDate,
+                MovieCategory = movie.MovieCategory,
+                ProducerId = movie.ProducerId
+            };
+            await _context.Movie.AddAsync(newMovie);
+
+            await _context.SaveChangesAsync();
+            foreach (var actorId in movie.ActorId)
+            {
+                var newActorMovie = new Actor_Movie()
+                {
+                    MovieId = newMovie.Id,
+                    ActorId = actorId
+                };
+
+                await _context.Actor_Movie.AddAsync(newActorMovie);
+            }
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
+        }
         // GET: Movies/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
@@ -85,9 +129,26 @@ namespace MoviesApp.Controllers
             {
                 return NotFound();
             }
-            ViewData["CinemaId"] = new SelectList(_context.Set<Cinema>(), "Id", "Description", movie.CinemaId);
-            ViewData["ProducerId"] = new SelectList(_context.Set<Producer>(), "Id", "Bio", movie.ProducerId);
-            return View(movie);
+            var response = new NewMovieVM()
+            {
+                Id = movie.Id,
+                Name = movie.Name,
+                Description = movie.Description,
+                Price = movie.Price,
+                StartDate = movie.StartDate,
+                EndDate = movie.EndDate,
+                ImageURL = movie.ImageURL,
+                MovieCategory = movie.MovieCategory,
+                CinemaId = movie.CinemaId,
+                ProducerId = movie.ProducerId,
+                ActorId = movie.Actor_Movie.Select(n => n.ActorId).ToList(),
+            };
+
+            var movieDropdownsData = await GetNewMovieDropdownsValues();
+            ViewBag.Cinemas = new SelectList(movieDropdownsData.Cinemas, "Id", "Name");
+            ViewBag.Producers = new SelectList(movieDropdownsData.Producers, "Id", "FullName");
+            ViewBag.Actors = new SelectList(movieDropdownsData.Actors, "Id", "FullName");
+            return View(response);
         }
 
         // POST: Movies/Edit/5
@@ -95,37 +156,57 @@ namespace MoviesApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Description,Price,ImageURL,StartDate,EndDate,MovieCategory,CinemaId,ProducerId")] Movie movie)
+        public async Task<IActionResult> Edit(int id, NewMovieVM movie)
         {
-            if (id != movie.Id)
+            if (id != movie.Id) return View("NotFound");
+
+            if (!ModelState.IsValid)
             {
-                return NotFound();
+                var movieDropdownsData = await GetNewMovieDropdownsValues();
+
+                ViewBag.Cinemas = new SelectList(movieDropdownsData.Cinemas, "Id", "Name");
+                ViewBag.Producers = new SelectList(movieDropdownsData.Producers, "Id", "FullName");
+                ViewBag.Actors = new SelectList(movieDropdownsData.Actors, "Id", "FullName");
+
+                return View(movie);
             }
 
-            if (ModelState.IsValid)
+            var dbMovie = await _context.Movie.FirstOrDefaultAsync(n => n.Id == movie.Id);
+
+            if (dbMovie != null)
             {
-                try
-                {
-                    _context.Update(movie);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!MovieExists(movie.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                dbMovie.Name = movie.Name;
+                dbMovie.Description = movie.Description;
+                dbMovie.Price = movie.Price;
+                dbMovie.ImageURL = movie.ImageURL;
+                dbMovie.CinemaId = movie.CinemaId;
+                dbMovie.StartDate = movie.StartDate;
+                dbMovie.EndDate = movie.EndDate;
+                dbMovie.MovieCategory = movie.MovieCategory;
+                dbMovie.ProducerId = movie.ProducerId;
+                await _context.SaveChangesAsync();
             }
-            ViewData["CinemaId"] = new SelectList(_context.Set<Cinema>(), "Id", "Description", movie.CinemaId);
-            ViewData["ProducerId"] = new SelectList(_context.Set<Producer>(), "Id", "Bio", movie.ProducerId);
-            return View(movie);
+
+            //Remove existing actors
+            var existingActorsDb = _context.Actor_Movie.Where(n => n.MovieId == movie.Id).ToList();
+            _context.Actor_Movie.RemoveRange(existingActorsDb);
+            await _context.SaveChangesAsync();
+
+            //Add Movie Actors
+            foreach (var actorId in movie.ActorId)
+            {
+                var newActorMovie = new Actor_Movie()
+                {
+                    MovieId = movie.Id,
+                    ActorId = actorId
+                };
+                await _context.Actor_Movie.AddAsync(newActorMovie);
+            }
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
         }
+
+
 
         // GET: Movies/Delete/5
         public async Task<IActionResult> Delete(int? id)
@@ -138,6 +219,7 @@ namespace MoviesApp.Controllers
             var movie = await _context.Movie
                 .Include(m => m.Cinema)
                 .Include(m => m.Producer)
+                .Include(am => am.Actor_Movie).ThenInclude(a => a.Actor)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (movie == null)
             {
@@ -157,8 +239,20 @@ namespace MoviesApp.Controllers
                 return Problem("Entity set 'MoviesAppContext.Movie'  is null.");
             }
             var movie = await _context.Movie.FindAsync(id);
+
             if (movie != null)
             {
+                //List<Actor_Movie> Actors= new List<Actor_Movie>();
+                //List <> Actors  = new SelectList(_context.Actor_Movie, "Id", "Name");
+                var actors = await _context.Actor_Movie.ToListAsync();
+                foreach (var item in actors)
+                {
+                    if (item.MovieId == movie.Id)
+                    {
+                        _context.Actor_Movie.Remove(item);
+                    }
+                }
+
                 _context.Movie.Remove(movie);
             }
             
