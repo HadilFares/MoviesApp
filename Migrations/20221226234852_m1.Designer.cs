@@ -12,7 +12,7 @@ using MoviesApp.Data;
 namespace MoviesApp.Migrations
 {
     [DbContext(typeof(MoviesAppContext))]
-    [Migration("20221221220633_m1")]
+    [Migration("20221226234852_m1")]
     partial class m1
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -52,21 +52,16 @@ namespace MoviesApp.Migrations
 
             modelBuilder.Entity("MoviesApp.Models.Actor_Movie", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
                     b.Property<int>("ActorId")
                         .HasColumnType("int");
 
                     b.Property<int>("MovieId")
                         .HasColumnType("int");
 
-                    b.HasKey("Id");
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
 
-                    b.HasIndex("ActorId");
+                    b.HasKey("ActorId", "MovieId");
 
                     b.HasIndex("MovieId");
 
@@ -174,13 +169,13 @@ namespace MoviesApp.Migrations
             modelBuilder.Entity("MoviesApp.Models.Actor_Movie", b =>
                 {
                     b.HasOne("MoviesApp.Models.Actor", "Actor")
-                        .WithMany("Actors_Movies")
+                        .WithMany("Actor_Movie")
                         .HasForeignKey("ActorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("MoviesApp.Models.Movie", "Movie")
-                        .WithMany("Actors_Movies")
+                        .WithMany("Actor_Movie")
                         .HasForeignKey("MovieId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -193,7 +188,7 @@ namespace MoviesApp.Migrations
             modelBuilder.Entity("MoviesApp.Models.Movie", b =>
                 {
                     b.HasOne("MoviesApp.Models.Cinema", "Cinema")
-                        .WithMany("Movies")
+                        .WithMany("Movie")
                         .HasForeignKey("CinemaId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -211,17 +206,17 @@ namespace MoviesApp.Migrations
 
             modelBuilder.Entity("MoviesApp.Models.Actor", b =>
                 {
-                    b.Navigation("Actors_Movies");
+                    b.Navigation("Actor_Movie");
                 });
 
             modelBuilder.Entity("MoviesApp.Models.Cinema", b =>
                 {
-                    b.Navigation("Movies");
+                    b.Navigation("Movie");
                 });
 
             modelBuilder.Entity("MoviesApp.Models.Movie", b =>
                 {
-                    b.Navigation("Actors_Movies");
+                    b.Navigation("Actor_Movie");
                 });
 
             modelBuilder.Entity("MoviesApp.Models.Producer", b =>

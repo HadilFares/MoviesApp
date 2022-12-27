@@ -91,14 +91,13 @@ namespace MoviesApp.Migrations
                 name: "Actor_Movie",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
                     MovieId = table.Column<int>(type: "int", nullable: false),
-                    ActorId = table.Column<int>(type: "int", nullable: false)
+                    ActorId = table.Column<int>(type: "int", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Actor_Movie", x => x.Id);
+                    table.PrimaryKey("PK_Actor_Movie", x => new { x.ActorId, x.MovieId });
                     table.ForeignKey(
                         name: "FK_Actor_Movie_Actor_ActorId",
                         column: x => x.ActorId,
@@ -112,11 +111,6 @@ namespace MoviesApp.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Actor_Movie_ActorId",
-                table: "Actor_Movie",
-                column: "ActorId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Actor_Movie_MovieId",
