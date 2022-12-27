@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +26,22 @@ namespace MoviesApp.Controllers
         {
             var moviesAppContext = _context.Movie.Include(m => m.Cinema).Include(m => m.Producer);
             return View(await moviesAppContext.ToListAsync());
+        }
+        [AllowAnonymous]
+        public async Task<IActionResult> Filter(string searchString)
+        {
+            var allMovies = await _context.Movie.ToListAsync();
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                //var filteredResult = allMovies.Where(n => n.Name.ToLower().Contains(searchString.ToLower()) || n.Description.ToLower().Contains(searchString.ToLower())).ToList();
+
+                var filteredResultNew = allMovies.Where(n => string.Equals(n.Name, searchString, StringComparison.CurrentCultureIgnoreCase) || string.Equals(n.Description, searchString, StringComparison.CurrentCultureIgnoreCase)).ToList();
+
+                return View("Index", filteredResultNew);
+            }
+
+            return View("Index", allMovies);
         }
 
         // GET: Movies/Details/5
@@ -125,6 +142,7 @@ namespace MoviesApp.Controllers
             }
 
             var movie = await _context.Movie.FindAsync(id);
+         
             if (movie == null)
             {
                 return NotFound();
@@ -141,7 +159,7 @@ namespace MoviesApp.Controllers
                 MovieCategory = movie.MovieCategory,
                 CinemaId = movie.CinemaId,
                 ProducerId = movie.ProducerId,
-                ActorId = movie.Actor_Movie.Select(n => n.ActorId).ToList(),
+               // ActorId = _context.Actor.Select 
             };
 
             var movieDropdownsData = await GetNewMovieDropdownsValues();

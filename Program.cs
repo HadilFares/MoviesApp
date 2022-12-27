@@ -43,5 +43,6 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Movies}/{action=Index}/{id?}");
 app.MapRazorPages();
+AppDbInitializer.Seed(app);
 
 app.Run();

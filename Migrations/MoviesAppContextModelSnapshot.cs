@@ -50,21 +50,16 @@ namespace MoviesApp.Migrations
 
             modelBuilder.Entity("MoviesApp.Models.Actor_Movie", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
                     b.Property<int>("ActorId")
                         .HasColumnType("int");
 
                     b.Property<int>("MovieId")
                         .HasColumnType("int");
 
-                    b.HasKey("Id");
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
 
-                    b.HasIndex("ActorId");
+                    b.HasKey("ActorId", "MovieId");
 
                     b.HasIndex("MovieId");
 
@@ -172,7 +167,7 @@ namespace MoviesApp.Migrations
             modelBuilder.Entity("MoviesApp.Models.Actor_Movie", b =>
                 {
                     b.HasOne("MoviesApp.Models.Actor", "Actor")
-                        .WithMany("Actors_Movies")
+                        .WithMany("Actor_Movie")
                         .HasForeignKey("ActorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -191,7 +186,7 @@ namespace MoviesApp.Migrations
             modelBuilder.Entity("MoviesApp.Models.Movie", b =>
                 {
                     b.HasOne("MoviesApp.Models.Cinema", "Cinema")
-                        .WithMany("Movies")
+                        .WithMany("Movie")
                         .HasForeignKey("CinemaId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -209,12 +204,12 @@ namespace MoviesApp.Migrations
 
             modelBuilder.Entity("MoviesApp.Models.Actor", b =>
                 {
-                    b.Navigation("Actors_Movies");
+                    b.Navigation("Actor_Movie");
                 });
 
             modelBuilder.Entity("MoviesApp.Models.Cinema", b =>
                 {
-                    b.Navigation("Movies");
+                    b.Navigation("Movie");
                 });
 
             modelBuilder.Entity("MoviesApp.Models.Movie", b =>
