@@ -27,18 +27,19 @@ namespace MoviesApp.Controllers
             var moviesAppContext = _context.Movie.Include(m => m.Cinema).Include(m => m.Producer);
             return View(await moviesAppContext.ToListAsync());
         }
+        
         [AllowAnonymous]
         public async Task<IActionResult> Filter(string searchString)
         {
-            var allMovies = await _context.Movie.ToListAsync();
+            var allMovies = await _context.Movie.Include(m => m.Cinema).Include(m => m.Producer).ToListAsync();
 
             if (!string.IsNullOrEmpty(searchString))
             {
-                //var filteredResult = allMovies.Where(n => n.Name.ToLower().Contains(searchString.ToLower()) || n.Description.ToLower().Contains(searchString.ToLower())).ToList();
+                var filteredResult = allMovies.Where(n => n.Name.ToLower().Contains(searchString.ToLower()) || n.Description.ToLower().Contains(searchString.ToLower())).ToList();
 
-                var filteredResultNew = allMovies.Where(n => string.Equals(n.Name, searchString, StringComparison.CurrentCultureIgnoreCase) || string.Equals(n.Description, searchString, StringComparison.CurrentCultureIgnoreCase)).ToList();
+              //  var filteredResultNew = allMovies.Where(n => string.Equals(n.Name, searchString, StringComparison.CurrentCultureIgnoreCase) || string.Equals(n.Description, searchString, StringComparison.CurrentCultureIgnoreCase)).ToList();
 
-                return View("Index", filteredResultNew);
+                return View("Index", filteredResult);
             }
 
             return View("Index", allMovies);

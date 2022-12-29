@@ -25,6 +25,22 @@ namespace MoviesApp.Controllers
               return View(await _context.Cinema.ToListAsync());
         }
 
+        public async Task<IActionResult> Filter(string searchString)
+        {
+            var allCinemas = await _context.Cinema.ToListAsync();
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                var filteredResult = allCinemas.Where(n => n.Name.ToLower().Contains(searchString.ToLower()) ).ToList();
+
+                //var filteredResultNew = allCinemas.Where(n => string.Equals(n.Name, searchString, StringComparison.CurrentCultureIgnoreCase)).ToList();
+
+                return View("Index", filteredResult);
+            }
+
+            return View("Index", allCinemas);
+        }
+
         // GET: Cinemas/Details/5
         public async Task<IActionResult> Details(int? id)
         {

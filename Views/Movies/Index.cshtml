@@ -4,6 +4,14 @@
     ViewData["Title"] = "List of Movies";
 }
 
+ <form class="form-inline my-2 my-lg-0" asp-controller="Movies" asp-action="Filter" style="padding-right: 25px;">
+                        <div class="col">
+                        <input name="searchString" type="text" class="form-control" placeholder="Search for a movies..." aria-label="Recipient's username" aria-describedby="button-addon2">
+                        </div>
+                        <div class="col">
+                        <button class="btn btn-outline-success my-2 my-sm-0" type="submit"><i class="bi bi-search"></i></button>
+                        </div>
+                    </form>
 <div class="row">
     @foreach (var item in Model)
     {
@@ -15,9 +23,11 @@
                             <p class="card-text">
                                 <h5 class="card-title">
                                     @item.Name
+                                    @if (User.Identity.IsAuthenticated && User.IsInRole("Admin"))
+                                    {
                                         <a class="text-white float-right" asp-action="Edit" asp-route-id="@item.Id">edit </a>
                                         <a class="text-white float-right" asp-action="Delete" asp-route-id="@item.Id">delete </a>
-                                        
+                                    }
                                 </h5>
                             </p>
                         </div>
@@ -50,26 +60,31 @@
 
                         </div>
                     </div>
-                    <div class="col-md-12">
-                        <div class="card-footer ">
-                            <p class="card-text">
-                                <a class="btn btn-outline-primary float-right" asp-action="Details" asp-route-id="@item.Id">
-                                    <i class="bi bi-eye-fill"></i> Show Details
-                                </a>
-                                <a class="btn btn-success text-white @((DateTime.Now > item.EndDate) ? "disabled" : "")"
+                    @if (User.Identity.IsAuthenticated && User.IsInRole("Admin"))
+                    {
+                        <div class="col-md-12">
+                            <div class="card-footer ">
+                                <p class="card-text">
+                                    <a class="btn btn-outline-primary float-right" asp-action="Details" asp-route-id="@item.Id">
+                                        <i class="bi bi-eye-fill"></i> Show Details
+                                    </a>
+                                    <a class="btn btn-success text-white @((DateTime.Now > item.EndDate) ? "disabled" : "")"
                                asp-controller="Orders"
                                asp-action="AddItemToShoppingCart"
                                asp-route-id="@item.Id">
-                                    <i class="bi bi-cart-plus"></i> Add to Cart (Price @item.Price.ToString("c"))
-                                </a>
-                                
-                            </p>
+                                        <i class="bi bi-cart-plus"></i> Add to Cart (Price @item.Price.ToString("c"))
+                                    </a>
+
+                                </p>
+                            </div>
                         </div>
-                    </div>
+                    }
                 </div>
             </div>
         </div>
     }
 </div>
 
-@await Html.PartialAsync("_CreateItem", "Movies") 
+@if (User.Identity.IsAuthenticated && User.IsInRole("Admin"))
+{
+    @await Html.PartialAsync("_CreateItem", "Movies") }

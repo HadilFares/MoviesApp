@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +24,24 @@ namespace MoviesApp.Controllers
         public async Task<IActionResult> Index()
         {
               return View(await _context.Actor.ToListAsync());
+        }
+
+        [AllowAnonymous]
+        public async Task<IActionResult> Filter(string searchString)
+        {
+            var allActors = await _context.Actor.ToListAsync();
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                var filteredResult = allActors.Where(n => n.FullName.ToLower().Contains(searchString.ToLower()) ).ToList();
+
+              //  var filteredResultNew = allActors.Where(n => string.Equals(n.FullName, searchString, StringComparison.CurrentCultureIgnoreCase)).ToList();
+
+                
+                return View("Index", filteredResult);
+            }
+
+            return View("Index", allActors);
         }
 
         // GET: Actors/Details/5
